@@ -1,0 +1,68 @@
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+# For Verdi
+ENV HTTP_PROXY=https://10.253.254.250:3130/
+ENV HTTPS_PROXY=https://10.253.254.250:3130/
+ENV http_proxy=https://10.253.254.250:3130/
+ENV https_proxy=https://10.253.254.250:3130/
+ENV REQUESTS_CA_BUNDLE=/usr/local/share/ca-certificates/verdi.crt
+
+# Certificate setup
+RUN mkdir -p /usr/local/share/ca-certificates/verdi
+COPY verdi.crt /usr/local/share/ca-certificates/verdi.crt
+RUN chmod 644 /usr/local/share/ca-certificates/verdi.crt && update-ca-certificates
+
+# Install system packages
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -y --fix-missing && \
+    apt-get install -y \
+    apt-utils \
+    locales \
+    ca-certificates \
+    build-essential \
+    python3-dev \
+    unzip \
+    wget \
+    zip \
+    zlib1g \
+    zlib1g-dev \
+    gnupg \
+    rsync \
+    python3-pip \
+    python3-venv \
+    git \
+    sudo \
+    libgl1 \
+    libglib2.0-0 \
+    ffmpeg && \
+    apt-get upgrade -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# UTF-8 setup
+RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+ENV LANG=en_US.utf8
+ENV LC_ALL=C
+
+# Install PyTorch with CUDA 12.4 support
+RUN pip install --no-cache-dir torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu124
+
+# Clone ComfyUI repository with specific version (recommended)
+WORKDIR /ComfyUI
+RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create non-root user
+RUN useradd -m -u 1000 comfyui && \
+    chown -R comfyui:comfyui /ComfyUI
+
+# Switch to non-root user
+USER comfyui
+
+# Expose default ComfyUI port
+EXPOSE 8188
+
+# Start ComfyUI with listening on all interfaces
+CMD ["python3", "main.py", "--listen", "0.0.0.0", "--port", "8188"]
