@@ -2,10 +2,6 @@ import os
 import gzip
 import json
 
-# disable proxy
-os.environ['HTTP_PROXY'] = ''
-os.environ['HTTPS_PROXY'] = ''
-
 import ollama
 from ollama import chat
 from ollama import ChatResponse

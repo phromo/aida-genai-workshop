@@ -6,6 +6,32 @@ Workshop files for the AIDA Data Hub Generative AI workshop
 
 Connect to the AIDA VM, then ...
 
+### configure proxy to the internet
+
+have a privoxy running on the connecting (your) host
+
+in .bashrc on the destination, configure it:
+
+```bash
+# proxy
+# Define the proxy URL
+PROXY_URL="http://127.0.0.1:8118"
+
+# Set the http_proxy and https_proxy environment variables
+export http_proxy=$PROXY_URL
+export https_proxy=$PROXY_URL
+
+# Set the HTTP_PROXY and HTTPS_PROXY environment variables (uppercase)
+export HTTP_PROXY=$PROXY_URL
+export HTTPS_PROXY=$PROXY_URL
+
+# Optionally, you can also set the ftp_proxy and FTP_PROXY if needed
+export ftp_proxy=$PROXY_URL
+export FTP_PROXY=$PROXY_URL
+
+export NO_PROXY=localhost,127.0.0.1,::1
+```
+
 ### clone this repository
 
 ```
