@@ -1,10 +1,18 @@
+import gzip
 import json
+
 import ollama
 from ollama import chat
 from ollama import ChatResponse
 
-with open("asclepius_notes.json") as fp:
-    notes = json.load(fp)
+# Function to read JSON data from a gzipped file
+def read_json_gz(file_path):
+    with gzip.open(file_path, 'rt', encoding='utf-8') as gz_file:
+        json_data = json.load(gz_file)
+    return json_data
+
+notes_rows = read_json_gz("asclepius_notes.json.gz")
+notes = [x["note"] for x in notes_rows]
 
 #print(ollama.list())
 
