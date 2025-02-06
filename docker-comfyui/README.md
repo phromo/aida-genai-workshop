@@ -22,8 +22,17 @@ sudo apt install nfs-common
 
 2. Create mount point and mount NFS share:
 ```bash
-sudo mkdir -p /mnt/shared_folder
-sudo mount 10.39.196.133:/shared_folder /mnt/shared_folder
+sudo mkdir -p /mnt/ext_shared_folder /mnt/shared_folder
+sudo chown $USER /mnt/shared_folder
+sudo mount 10.39.196.133:/shared_folder /mnt/ext_shared_folder
+rsync -av --info=progress2 /mnt/ext_shared_folder/ /mnt/shared_folder/
+```
+
+Prepare output directory
+```bash
+sudo mkdir -p /mnt/comfy_output
+sudo chown $USER /mnt/comfy_output
+sudo chmod 777 /mnt/comfy_output
 ```
 
 ## Docker Setup and Usage
@@ -42,14 +51,16 @@ git branch docker-comfyui
 
 3. Build the Docker image:
 ```bash
+cp /usr/local/share/ca-certificates/verdi.crt ./verdi.crt
 docker build -t comfyui .
 ```
 
 4. Run the container with NFS mount:
 ```bash
-docker run -it --gpus all \
+docker run --rm -it --name comfyui --gpus all \
   -p 8188:8188 \
   -v /mnt/shared_folder:/ComfyUI/models/checkpoints \
+  -v /mnt/comfy_output:/ComfyUI/output \
   comfyui
 ```
 
@@ -157,26 +168,26 @@ graph TD
     A[nvidia/cuda base image] --> B[base stage]
     B --> C[pytorch stage]
     C --> D[comfyui stage]
-    
+
     subgraph "Base Stage"
     B -- "Installs" --> B1[System Packages]
     B -- "Sets up" --> B2[SSL Certificates]
     B -- "Configures" --> B3[Locale & Environment]
     end
-    
+
     subgraph "PyTorch Stage"
     C -- "Installs" --> C1[PyTorch + CUDA]
     C -- "Installs" --> C2[torchvision]
     C -- "Installs" --> C3[torchaudio]
     end
-    
+
     subgraph "ComfyUI Stage"
     D -- "Clones" --> D1[ComfyUI Repository]
     D -- "Installs" --> D2[Python Dependencies]
     D -- "Creates" --> D3[Non-root User]
     D -- "Exposes" --> D4[Port 8188]
     end
-    
+
     style A fill:#f9f,stroke:#333
     style B fill:#bbf,stroke:#333
     style C fill:#bfb,stroke:#333
