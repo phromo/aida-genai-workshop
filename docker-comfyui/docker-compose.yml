@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  comfyui:
+    image: comfyui:latest
+    user: root
+    ports:
+      - "8188:8188"
+    volumes:
+      - /usr/local/share/ca-certificates/verdi.crt:/usr/local/share/ca-certificates/verdi.crt
+      - ./entrypoint.sh:/entrypoint.sh
+      - /mnt/shared_folder:/ComfyUI/models/checkpoints
+    environment:
+      - HTTP_PROXY=https://10.253.254.250:3130/
+      - HTTPS_PROXY=https://10.253.254.250:3130/
+      - http_proxy=https://10.253.254.250:3130/
+      - https_proxy=https://10.253.254.250:3130/
+      - REQUESTS_CA_BUNDLE=/usr/local/share/ca-certificates/verdi.crt
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    command: python3 main.py --listen 0.0.0.0 --port 8188
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
